@@ -1,0 +1,206 @@
+[
+  {
+  "uid": "vid_001",
+  "video": {
+    "id": "JzPfMbG1vrE",
+    "title": "30 Second Explainer Videos",
+    "author": "Explainer Video Cafe",
+    "duration": "00:00:28.940",
+    "category": "Commercial",
+    "difficulty": 1
+  },
+  "transcript": {
+    "segments": [
+      {
+        "id": "1",
+        "startTime": "00:00:11.440",
+        "endTime": "00:00:13.920",
+        "text": "so you're running a little late today"
+      },
+      {
+        "id": "2",
+        "startTime": "00:00:13.920",
+        "endTime": "00:00:15.599",
+        "text": "and you haven't had your fresh cup of"
+      },
+      {
+        "id": "3",
+        "startTime": "00:00:15.599",
+        "endTime": "00:00:17.600",
+        "text": "coffee yet"
+      },
+      {
+        "id": "4",
+        "startTime": "00:00:17.600",
+        "endTime": "00:00:19.840",
+        "text": "no matter the weather or traffic we"
+      },
+      {
+        "id": "5",
+        "startTime": "00:00:19.840",
+        "endTime": "00:00:22.740",
+        "text": "deliver fresh coffee and bagels"
+      },
+      {
+        "id": "6",
+        "startTime": "00:00:25.840",
+        "endTime": "00:00:28.940",
+        "text": "the java cafe"
+      }
+    ]
+  }
+},
+{
+  "uid": "vid_002",
+  "video": {
+    "id": "JzPfMbG1vrE",
+    "title": "30 Second Explainer Videos 2",
+    "author": "Explainer Video Cafe",
+    "duration": "00:00:28.940",
+    "category": "Commercial",
+    "difficulty": 2
+  },
+  "transcript": {
+    "segments": [
+      {
+        "id": "1",
+        "startTime": "00:00:11.440",
+        "endTime": "00:00:13.920",
+        "text": "so you're test test etset test test test test test test test test a little late today"
+      },
+      {
+        "id": "2",
+        "startTime": "00:00:13.920",
+        "endTime": "00:00:15.599",
+        "text": "and you haven't had your fresh cup of"
+      },
+      {
+        "id": "3",
+        "startTime": "00:00:15.599",
+        "endTime": "00:00:17.600",
+        "text": "coffee yet"
+      },
+      {
+        "id": "4",
+        "startTime": "00:00:17.600",
+        "endTime": "00:00:19.840",
+        "text": "no matter the weather or traffic we"
+      },
+      {
+        "id": "5",
+        "startTime": "00:00:19.840",
+        "endTime": "00:00:22.740",
+        "text": "deliver fresh coffee and bagels"
+      },
+      {
+        "id": "6",
+        "startTime": "00:00:25.840",
+        "endTime": "00:00:28.940",
+        "text": "the java cafe"
+      }
+    ]
+  }
+},
+{
+  "uid": "vid_003",
+  "video": {
+    "id": "JzPfMbG1vrE",
+    "title": "30 Second Explainer Videos 3",
+    "author": "Explainer Video Cafe",
+    "duration": "00:00:28.940",
+    "category": "Commercial",
+    "difficulty": 3
+  },
+  "transcript": {
+    "segments": [
+      {
+        "id": "1",
+        "startTime": "00:00:11.440",
+        "endTime": "00:00:13.920",
+        "text": "so you're running a little late today"
+      },
+      {
+        "id": "2",
+        "startTime": "00:00:13.920",
+        "endTime": "00:00:15.599",
+        "text": "and you haven't had your fresh cup of"
+      },
+      {
+        "id": "3",
+        "startTime": "00:00:15.599",
+        "endTime": "00:00:17.600",
+        "text": "coffee yet"
+      },
+      {
+        "id": "4",
+        "startTime": "00:00:17.600",
+        "endTime": "00:00:19.840",
+        "text": "no matter the weather or traffic we"
+      },
+      {
+        "id": "5",
+        "startTime": "00:00:19.840",
+        "endTime": "00:00:22.740",
+        "text": "deliver fresh coffee and bagels"
+      },
+      {
+        "id": "6",
+        "startTime": "00:00:25.840",
+        "endTime": "00:00:28.940",
+        "text": "the java cafe"
+      }
+    ]
+  }
+},
+{
+  "uid": "vid_004",
+  "video": {
+    "id": "JzPfMbG1vrE",
+    "title": "30 Second Explainer Videos 4",
+    "author": "Explainer Video Cafe",
+    "duration": "00:00:28.940",
+    "category": "Commercial",
+    "difficulty": 2
+  },
+  "transcript": {
+    "segments": [
+      {
+        "id": "1",
+        "startTime": "00:00:11.440",
+        "endTime": "00:00:13.920",
+        "text": "so you're running a little late today"
+      },
+      {
+        "id": "2",
+        "startTime": "00:00:13.920",
+        "endTime": "00:00:15.599",
+        "text": "and you haven't had your fresh cup of"
+      },
+      {
+        "id": "3",
+        "startTime": "00:00:15.599",
+        "endTime": "00:00:17.600",
+        "text": "coffee yet"
+      },
+      {
+        "id": "4",
+        "startTime": "00:00:17.600",
+        "endTime": "00:00:19.840",
+        "text": "no matter the weather or traffic we"
+      },
+      {
+        "id": "5",
+        "startTime": "00:00:19.840",
+        "endTime": "00:00:22.740",
+        "text": "deliver fresh coffee and bagels"
+      },
+      {
+        "id": "6",
+        "startTime": "00:00:25.840",
+        "endTime": "00:00:28.940",
+        "text": "the java cafe"
+      }
+    ]
+  }
+}
+]
