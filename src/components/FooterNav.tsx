@@ -1,8 +1,8 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Animated } from 'react-native';
 import { COLORS, FONTS, FONT_SIZES, SPACING } from '../constants/theme';
 
-type ScreenName = 'Home' | 'Favorites' | 'History' | 'Settings';
+type ScreenName = 'Home' | 'Favorites' | 'Lists' | 'History' | 'Settings';
 
 interface FooterNavProps {
   onNavigate: (screen: ScreenName) => void;
@@ -13,12 +13,15 @@ const FooterNav: React.FC<FooterNavProps> = ({ onNavigate, currentScreen }) => {
   const navItems = [
     { label: 'Videos', icon: require('../assets/icons/monitor4.png'), screen: 'Home' as ScreenName },
     { label: 'Favorites', icon: require('../assets/icons/heart.png'), screen: 'Favorites' as ScreenName },
+    { label: 'Lists', icon: require('../assets/icons/test.png'), screen: 'Lists' as ScreenName },
     { label: 'History', icon: require('../assets/icons/clock5.png'), screen: 'History' as ScreenName },
     { label: 'Settings', icon: require('../assets/icons/gearcopy.png'), screen: 'Settings' as ScreenName },
   ];
 
-  // Create an array of animated values for each nav item
-  const scaleAnims = useRef(navItems.map(() => new Animated.Value(1))).current;
+  // Create animated values for each nav item
+  const [scaleAnims] = useState(() => 
+    navItems.map(() => new Animated.Value(1))
+  );
 
   const handlePress = (screen: ScreenName, index: number) => {
     // Scale down animation for the specific item
@@ -43,7 +46,7 @@ const FooterNav: React.FC<FooterNavProps> = ({ onNavigate, currentScreen }) => {
     <View style={styles.container}>
       {navItems.map((item, index) => (
         <Animated.View 
-          key={index}
+          key={item.screen}
           style={[
             styles.navItemContainer,
             { transform: [{ scale: scaleAnims[index] }] }

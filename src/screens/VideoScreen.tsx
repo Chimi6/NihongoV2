@@ -13,31 +13,15 @@ import {
 } from 'react-native';
 import WebView from 'react-native-webview';
 import { COLORS, FONTS, FONT_SIZES, SPACING } from '../constants/theme';
-import FooterNav from '../components/FooterNav';
-import { addToFavorites, removeFromFavorites, isFavorite } from '../services/database.js';
+import * as database from '../services/database';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types/navigation';
+import { VideoData } from './HomeScreen';
+import { HistoryItem } from '../services/database';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const VIDEO_HEIGHT = SCREEN_HEIGHT * 0.3;
-
-interface VideoData {
-  uid: string;
-  video: {
-    id: string;
-    title: string;
-    author: string;
-    duration: string;
-    category: string;
-    difficulty: 1 | 2 | 3;
-  };
-  transcript: {
-    segments: Array<{
-      id: string;
-      startTime: string;
-      endTime: string;
-      text: string;
-    }>;
-  };
-}
 
 interface VideoScreenProps {
   videoData: VideoData;
@@ -50,7 +34,11 @@ interface SegmentPosition {
   height: number;
 }
 
-const VideoScreen: React.FC<VideoScreenProps> = ({ videoData, onBack }) => {
+const VideoScreen: React.FC = () => {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const route = useRoute<RouteProp<RootStackParamList, 'Video'>>();
+  const { videoData } = route.params;
+  
   const [currentSegmentId, setCurrentSegmentId] = useState<string | null>(null);
   const [segmentPositions, setSegmentPositions] = useState<SegmentPosition[]>([]);
   const [currentScrollY, setCurrentScrollY] = useState(0);
@@ -60,12 +48,31 @@ const VideoScreen: React.FC<VideoScreenProps> = ({ videoData, onBack }) => {
   const segmentRefs = useRef<{ [key: string]: View | null }>({});
   const webViewRef = useRef<WebView>(null);
 
+  // Log when component mounts
+  useEffect(() => {
+    // Add to history when video screen is opened
+    const updateHistory = async () => {
+      try {
+        if (!videoData?.uid) {
+          console.error('Cannot update history: No video UID provided');
+          return;
+        }
+        console.log('Adding video to history with UID:', videoData.uid);
+        const result = await database.addToHistory(videoData.uid);
+        console.log('History update result:', result);
+      } catch (error) {
+        console.error('Error updating history:', error);
+      }
+    };
+    updateHistory();
+  }, []); 
+
   // Check if video is favorited on mount
   useEffect(() => {
     const checkFavoriteStatus = async () => {
       try {
         if (!videoData?.uid) return;
-        const favorited = await isFavorite(videoData.uid);
+        const favorited = await database.isFavorite(videoData.uid);
         setIsFavorited(favorited);
       } catch (error) {
         console.error('Error checking favorite status:', error);
@@ -76,54 +83,68 @@ const VideoScreen: React.FC<VideoScreenProps> = ({ videoData, onBack }) => {
 
   const handleFavoritePress = async () => {
     try {
-      if (!videoData?.uid) {
-        console.error('No video UID available');
-        return;
-      }
+      if (!videoData?.uid) return;
 
       if (isFavorited) {
-        await removeFromFavorites(videoData.uid);
+        await database.removeFromFavorites(videoData.uid);
         setIsFavorited(false);
-        console.log('Removed from favorites:', videoData.uid);
       } else {
-        await addToFavorites(videoData.uid);
+        await database.addToFavorites(videoData.uid);
         setIsFavorited(true);
-        console.log('Added to favorites:', videoData.uid);
       }
     } catch (error) {
       console.error('Error toggling favorite:', error);
     }
   };
 
-  const handleViewFavorites = async () => {
-    try {
-      const favorites = await getFavorites();
-      console.log('Current favorites:', favorites);
-    } catch (error) {
-      console.error('Error getting favorites:', error);
-    }
-  };
-
   // YouTube embed URL with parameters to prevent fullscreen and related videos
-  const embedUrl = `https://www.youtube.com/embed/${videoData.video.id}?rel=0&showinfo=0&fs=0&playsinline=1&modestbranding=1&controls=1&disablekb=0&enablejsapi=1&origin=${encodeURIComponent('http://localhost')}`;
+  const embedUrl = `https://www.youtube.com/embed/${videoData.video.id}?rel=0&showinfo=0&fs=0&playsinline=1&modestbranding=1&controls=1&disablekb=0&enablejsapi=1&origin=${encodeURIComponent('http://localhost')}&playsinline=1&autoplay=1&mute=1`;
 
-  // JavaScript to inject into the WebView
+  // JavaScript to inject into WebView for video control
   const injectedJavaScript = `
-    if (typeof sendTimeUpdate === 'undefined') {
-      function sendTimeUpdate() {
-        const player = document.querySelector('#movie_player');
-        if (player && player.getCurrentTime && player.getPlayerState && player.getPlayerState() === 1) {
-          window.ReactNativeWebView.postMessage('timeupdate:' + player.getCurrentTime());
-        }
+    (function() {
+      // Function to find video element
+      function findVideoElement() {
+        const video = document.querySelector('video');
+        return video;
       }
-      setInterval(sendTimeUpdate, 100);
-    }
+
+      // Set up video element
+      let video = findVideoElement();
+      
+      // If video not found immediately, try again after a short delay
+      if (!video) {
+        setTimeout(() => {
+          video = findVideoElement();
+          if (video) {
+            setupVideoListeners(video);
+          }
+        }, 1000);
+      } else {
+        setupVideoListeners(video);
+      }
+
+      function setupVideoListeners(video) {
+        // Add timeupdate listener
+        video.addEventListener('timeupdate', function() {
+          window.ReactNativeWebView.postMessage('timeupdate:' + video.currentTime);
+        });
+      }
+
+      // Listen for play messages
+      window.addEventListener('message', function(event) {
+        if (event.data === 'play') {
+          const video = findVideoElement();
+          if (video) {
+            video.play();
+          }
+        }
+      });
+    })();
     true;
   `;
 
   const handlePlayPress = (segmentId: string) => {
-    console.log('Play button pressed for segment:', segmentId);
-    
     // Find the segment and its start time
     const segment = videoData.transcript.segments.find(s => s.id === segmentId);
     if (segment) {
@@ -158,6 +179,7 @@ const VideoScreen: React.FC<VideoScreenProps> = ({ videoData, onBack }) => {
   // Function to handle segment layout changes
   const handleSegmentLayout = (segmentId: string, event: LayoutChangeEvent) => {
     const { y, height } = event.nativeEvent.layout;
+    
     setSegmentPositions(prev => {
       const newPositions = prev.filter(pos => pos.id !== segmentId);
       return [...newPositions, { id: segmentId, y, height }];
@@ -191,13 +213,11 @@ const VideoScreen: React.FC<VideoScreenProps> = ({ videoData, onBack }) => {
           const scrollDistance = Math.abs(scrollPosition - currentScrollY);
           
           if (scrollDistance > SCREEN_HEIGHT) {
-            // For large distances, scroll instantly
             scrollViewRef.current?.scrollTo({
               y: Math.max(0, scrollPosition),
               animated: false
             });
           } else {
-            // For smaller distances, use smooth scrolling
             scrollViewRef.current?.scrollTo({
               y: Math.max(0, scrollPosition),
               animated: true
@@ -211,9 +231,10 @@ const VideoScreen: React.FC<VideoScreenProps> = ({ videoData, onBack }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={onBack} style={styles.backButton}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
+        <Text style={styles.title}>{videoData.video.title}</Text>
       </View>
 
       <View style={styles.videoContainer}>
@@ -232,7 +253,6 @@ const VideoScreen: React.FC<VideoScreenProps> = ({ videoData, onBack }) => {
           scrollEnabled={false}
           injectedJavaScript={injectedJavaScript}
           onShouldStartLoadWithRequest={(request) => {
-            // Prevent navigation to YouTube app or fullscreen
             return request.url.startsWith('https://www.youtube.com/embed/');
           }}
           onMessage={(event) => {
@@ -241,6 +261,9 @@ const VideoScreen: React.FC<VideoScreenProps> = ({ videoData, onBack }) => {
               handleTimeUpdate({ nativeEvent: { data: time } });
             }
           }}
+          androidLayerType="hardware"
+          cacheEnabled={true}
+          cacheMode="LOAD_CACHE_ELSE_NETWORK"
         />
       </View>
 
@@ -315,8 +338,6 @@ const VideoScreen: React.FC<VideoScreenProps> = ({ videoData, onBack }) => {
           ))}
         </View>
       </ScrollView>
-
-      <FooterNav onNavigate={() => {}} currentScreen="Home" />
     </SafeAreaView>
   );
 };
@@ -342,6 +363,11 @@ const styles = StyleSheet.create({
   backButtonText: {
     fontSize: FONT_SIZES.lg,
     color: COLORS.text.primary,
+  },
+  title: {
+    fontSize: FONT_SIZES.lg,
+    color: COLORS.text.primary,
+    marginBottom: SPACING.xs,
   },
   videoContainer: {
     height: VIDEO_HEIGHT,

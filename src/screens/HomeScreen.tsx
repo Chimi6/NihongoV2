@@ -7,17 +7,21 @@ import {
   ScrollView,
   Dimensions,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
 import { COLORS, FONTS, FONT_SIZES, SPACING } from '../constants/theme';
 import CategoryIcon from '../components/CategoryIcon';
 import VideoCard from '../components/VideoCard';
 import FooterNav from '../components/FooterNav';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types/navigation';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-type ScreenName = 'Home' | 'Favorites' | 'History' | 'Settings' | 'Video';
+type ScreenName = 'Home' | 'Favorites' | 'Lists' | 'History' | 'Settings' | 'Video';
 
-interface VideoData {
+export interface VideoData {
   uid: string;
   video: {
     id: string;
@@ -37,12 +41,8 @@ interface VideoData {
   };
 }
 
-interface HomeScreenProps {
-  onNavigate: (screen: ScreenName) => void;
-  onVideoPress: (videoData: VideoData) => void;
-}
-
-const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onVideoPress }) => {
+const HomeScreen: React.FC = () => {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   console.log('HomeScreen rendering...');
   
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -88,6 +88,18 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onVideoPress }) => 
     return url;
   };
 
+  const handleVideoPress = (video: VideoData) => {
+    if (navigation) {
+      navigation.navigate('Video', { videoData: video });
+    }
+  };
+
+  const handleNavigate = (screen: keyof Omit<RootStackParamList, 'Video'>) => {
+    if (navigation) {
+      navigation.navigate(screen);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -117,17 +129,15 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onVideoPress }) => 
             return (
               <VideoCard 
                 key={item.uid}
-                title={item.video.title}
-                thumbnail={getYoutubeThumbnail(item.video.id)}
-                difficulty={item.video.difficulty}
-                onPress={() => onVideoPress(item)}
+                video={item}
+                onPress={() => handleVideoPress(item)}
               />
             );
           })
         )}
       </ScrollView>
 
-      <FooterNav onNavigate={onNavigate} currentScreen="Home" />
+      <FooterNav onNavigate={handleNavigate} currentScreen="Home" />
     </SafeAreaView>
   );
 };

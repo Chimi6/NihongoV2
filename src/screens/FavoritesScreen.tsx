@@ -1,37 +1,72 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   SafeAreaView,
   ScrollView,
+  TouchableOpacity,
 } from 'react-native';
 import { COLORS, FONTS, FONT_SIZES, SPACING } from '../constants/theme';
 import VideoCard from '../components/VideoCard';
 import FooterNav from '../components/FooterNav';
-import { ScreenName, VideoData } from '../types/video';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types/navigation';
+import { VideoData } from './HomeScreen';
+import { getFavorites } from '../services/database';
 
-interface FavoritesScreenProps {
-  onNavigate: (screen: ScreenName) => void;
-  onVideoPress: (videoData: VideoData) => void;
-}
+const FavoritesScreen: React.FC = () => {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const [favorites, setFavorites] = useState<VideoData[]>([]);
+  const [allVideos, setAllVideos] = useState<VideoData[]>([]);
 
-const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ onNavigate, onVideoPress }) => {
-  // Placeholder data - this would be loaded from favorites in the future
-  const favoriteVideos: VideoData[] = Array.from({ length: 3 }, (_, i) => ({
-    uid: `favorite-${i}`,
-    video: {
-      id: `video-${i}`,
-      title: `Favorite Video ${i + 1}`,
-      author: 'Author Name',
-      duration: '10:00',
-      category: 'Category',
-      difficulty: 1,
-    },
-    transcript: {
-      segments: [],
-    },
-  }));
+  useEffect(() => {
+    loadAllVideos();
+  }, []);
+
+  useEffect(() => {
+    if (allVideos.length > 0) {
+      loadFavorites();
+    }
+  }, [allVideos]);
+
+  const loadAllVideos = async () => {
+    try {
+      // Load all videos from the JSON file
+      const videoData = require('../assets/data/java_cafe.json') as VideoData[];
+      setAllVideos(videoData);
+    } catch (error) {
+      console.error('Error loading all videos:', error);
+    }
+  };
+
+  const loadFavorites = async () => {
+    try {
+      const favoriteUids = await getFavorites();
+      // Match favorite UIDs with full video data
+      const favoriteVideos = favoriteUids
+        .map(uid => allVideos.find(video => video.uid === uid))
+        .filter((video): video is VideoData => video !== undefined);
+      
+      setFavorites(favoriteVideos);
+    } catch (error) {
+      console.error('Error loading favorites:', error);
+      setFavorites([]);
+    }
+  };
+
+  const handleVideoPress = (video: VideoData) => {
+    if (navigation && video && video.video && video.video.id) {
+      navigation.navigate('Video', { videoData: video });
+    }
+  };
+
+  const handleNavigate = (screen: keyof Omit<RootStackParamList, 'Video'>) => {
+    if (navigation) {
+      navigation.navigate(screen);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -44,18 +79,20 @@ const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ onNavigate, onVideoPr
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {favoriteVideos.map((videoData) => (
-          <VideoCard 
-            key={videoData.uid} 
-            title={videoData.video.title}
-            thumbnail="https://picsum.photos/200/300" // Placeholder thumbnail
-            difficulty={videoData.video.difficulty}
-            onPress={() => onVideoPress(videoData)}
-          />
-        ))}
+        {favorites.length === 0 ? (
+          <Text style={styles.noFavoritesText}>No favorite videos yet</Text>
+        ) : (
+          favorites.map((video) => (
+            <VideoCard
+              key={video.uid}
+              video={video}
+              onPress={() => handleVideoPress(video)}
+            />
+          ))
+        )}
       </ScrollView>
 
-      <FooterNav onNavigate={onNavigate} currentScreen="Favorites" />
+      <FooterNav onNavigate={handleNavigate} currentScreen="Favorites" />
     </SafeAreaView>
   );
 };
@@ -81,6 +118,13 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: SPACING.sm,
+  },
+  noFavoritesText: {
+    textAlign: 'center',
+    marginTop: SPACING.lg,
+    fontSize: FONT_SIZES.md,
+    color: COLORS.text.secondary,
+    fontFamily: FONTS.regular,
   },
 });
 

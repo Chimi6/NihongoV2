@@ -4,26 +4,45 @@ import {
   Text,
   StyleSheet,
   SafeAreaView,
+  TouchableOpacity,
 } from 'react-native';
 import { COLORS, FONTS, FONT_SIZES, SPACING } from '../constants/theme';
 import FooterNav from '../components/FooterNav';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types/navigation';
 
-type ScreenName = 'Home' | 'Favorites' | 'History' | 'Settings';
+const SettingsScreen: React.FC = () => {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
-interface SettingsScreenProps {
-  onNavigate: (screen: ScreenName) => void;
-}
+  const handleNavigate = (screen: keyof Omit<RootStackParamList, 'Video'>) => {
+    if (navigation) {
+      navigation.navigate(screen);
+    }
+  };
 
-const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Settings</Text>
       </View>
 
-      <View style={styles.content} />
+      <View style={styles.content}>
+        <TouchableOpacity style={styles.settingItem}>
+          <Text style={styles.settingText}>Account Settings</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.settingItem}>
+          <Text style={styles.settingText}>Notifications</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.settingItem}>
+          <Text style={styles.settingText}>Privacy</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.settingItem}>
+          <Text style={styles.settingText}>About</Text>
+        </TouchableOpacity>
+      </View>
 
-      <FooterNav onNavigate={onNavigate} currentScreen="Settings" />
+      <FooterNav onNavigate={handleNavigate} currentScreen="Settings" />
     </SafeAreaView>
   );
 };
@@ -46,6 +65,17 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    padding: SPACING.md,
+  },
+  settingItem: {
+    paddingVertical: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  settingText: {
+    fontSize: FONT_SIZES.md,
+    color: COLORS.text.primary,
+    fontFamily: FONTS.regular,
   },
 });
 

@@ -1,51 +1,63 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions, Image, Platform, TouchableOpacity } from 'react-native';
+import NetInfo from '@react-native-community/netinfo';
 import { COLORS, FONTS, FONT_SIZES, SPACING } from '../constants/theme';
+import { VideoData } from '../screens/HomeScreen';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const CARD_HEIGHT = SCREEN_HEIGHT / 6;
 const ICON_HEIGHT = CARD_HEIGHT * 0.17;
 
 interface VideoCardProps {
-  title: string;
-  thumbnail: string;  // URL to the thumbnail
-  difficulty: 1 | 2 | 3;
+  video: VideoData;
   onPress: () => void;
 }
 
 const VideoCard: React.FC<VideoCardProps> = ({ 
-  title,
-  thumbnail,
-  difficulty,
+  video,
   onPress
 }) => {
+  // Use a simpler thumbnail URL format without query parameters
+  const thumbnail = `https://i.ytimg.com/vi/${video.video.id}/mqdefault.jpg`;
+
+  const handleImageError = async (error: any) => {
+    console.error('Thumbnail loading error:', error.nativeEvent.error);
+    console.log('Failed thumbnail URL:', thumbnail);
+    console.log('Video ID:', video.video.id);
+    
+    // Check network connectivity
+    const netInfo = await NetInfo.fetch();
+    console.log('Network state:', netInfo);
+  };
+
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}>
       <View style={styles.imageContainer}>
         <Image 
           source={{ uri: thumbnail }}
           style={styles.thumbnail}
+          onError={handleImageError}
         />
       </View>
       <View style={styles.textContainer}>
         <View style={styles.topTextContainer}>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.author}>Explainer Video Cafe</Text>
+          <Text style={styles.title}>{video.video.title}</Text>
+          <Text style={styles.author}>{video.video.author}</Text>
         </View>
         <View style={styles.bottomContainer}>
           <Text style={styles.difficulty}>Difficulty</Text>
           <View style={styles.iconsContainer}>
             <Image 
               source={require('../assets/icons/sushi2.png')}
-              style={[styles.icon, { opacity: difficulty >= 1 ? 1 : 0.3 }]}
+              style={[styles.icon, { opacity: video.video.difficulty >= 1 ? 1 : 0.3 }]}
             />
             <Image 
               source={require('../assets/icons/sushi2.png')}
-              style={[styles.icon, { opacity: difficulty >= 2 ? 1 : 0.3 }]}
+              style={[styles.icon, { opacity: video.video.difficulty >= 2 ? 1 : 0.3 }]}
             />
             <Image 
               source={require('../assets/icons/sushi2.png')}
-              style={[styles.icon, { opacity: difficulty >= 3 ? 1 : 0.3 }]}
+              style={[styles.icon, { opacity: video.video.difficulty >= 3 ? 1 : 0.3 }]}
             />
           </View>
         </View>

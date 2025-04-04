@@ -1,28 +1,37 @@
 import SQLite from 'react-native-sqlite-storage';
 
+export interface Database {
+  executeSql: (query: string, params?: any[]) => Promise<[SQLite.ResultSet]>;
+}
+
+export interface HistoryItem {
+  uid: string;
+  timestamp: string;
+}
+
 // Database configuration
-const database_name = 'nihongo.db';
+const database_name = "NihongoV2.db";
+const database_size = 200000;
+
+// Table names
 const TABLE_FAVORITES = 'favorites';
 const TABLE_HISTORY = 'history';
 
-// Enable both callbacks and promises
-SQLite.enablePromise(true);
-
 // Global database instance
-let db = null;
+let db: Database | null = null;
 
 // Database initialization
-export const initDatabase = async () => {
+export const initDatabase = async (): Promise<Database> => {
   try {
     if (db) return db;
 
-    db = await SQLite.openDatabase({
+    const database = await SQLite.openDatabase({
       name: database_name,
       location: 'default',
     });
 
     // Create favorites table with just the video UID
-    await db.executeSql(`
+    await database.executeSql(`
       CREATE TABLE IF NOT EXISTS ${TABLE_FAVORITES} (
         uid TEXT PRIMARY KEY,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -30,7 +39,7 @@ export const initDatabase = async () => {
     `);
 
     // Create history table
-    await db.executeSql(`
+    await database.executeSql(`
       CREATE TABLE IF NOT EXISTS ${TABLE_HISTORY} (
         uid TEXT PRIMARY KEY,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -38,6 +47,7 @@ export const initDatabase = async () => {
     `);
 
     console.log('Database initialized successfully');
+    db = database;
     return db;
   } catch (error) {
     console.error('Error initializing database:', error);
@@ -46,13 +56,13 @@ export const initDatabase = async () => {
 };
 
 // Favorites operations
-export const addToFavorites = async (uid) => {
+export const addToFavorites = async (uid: string): Promise<boolean> => {
   try {
     if (!db) {
       await initDatabase();
     }
 
-    await db.executeSql(
+    await db!.executeSql(
       `INSERT OR REPLACE INTO ${TABLE_FAVORITES} (uid) VALUES (?)`,
       [uid]
     );
@@ -65,13 +75,13 @@ export const addToFavorites = async (uid) => {
   }
 };
 
-export const removeFromFavorites = async (uid) => {
+export const removeFromFavorites = async (uid: string): Promise<boolean> => {
   try {
     if (!db) {
       await initDatabase();
     }
 
-    await db.executeSql(`DELETE FROM ${TABLE_FAVORITES} WHERE uid = ?`, [uid]);
+    await db!.executeSql(`DELETE FROM ${TABLE_FAVORITES} WHERE uid = ?`, [uid]);
     console.log('Removed from favorites successfully');
     return true;
   } catch (error) {
@@ -80,19 +90,17 @@ export const removeFromFavorites = async (uid) => {
   }
 };
 
-export const getFavorites = async () => {
+export const getFavorites = async (): Promise<string[]> => {
   try {
     if (!db) {
       await initDatabase();
     }
 
-    const [results] = await db.executeSql(
-      `SELECT uid FROM ${TABLE_FAVORITES} ORDER BY created_at DESC`
-    );
-
-    const favorites = [];
-    for (let i = 0; i < results.rows.length; i++) {
-      favorites.push(results.rows.item(i).uid);
+    const [results] = await db!.executeSql(`SELECT uid FROM ${TABLE_FAVORITES} ORDER BY created_at DESC`);
+    const favorites: string[] = [];
+    
+    for (let index = 0; index < results.rows.length; index++) {
+      favorites.push(results.rows.item(index).uid);
     }
 
     return favorites;
@@ -102,13 +110,13 @@ export const getFavorites = async () => {
   }
 };
 
-export const isFavorite = async (uid) => {
+export const isFavorite = async (uid: string): Promise<boolean> => {
   try {
     if (!db) {
       await initDatabase();
     }
 
-    const [results] = await db.executeSql(
+    const [results] = await db!.executeSql(
       `SELECT COUNT(*) as count FROM ${TABLE_FAVORITES} WHERE uid = ?`,
       [uid]
     );
@@ -116,73 +124,60 @@ export const isFavorite = async (uid) => {
     return results.rows.item(0).count > 0;
   } catch (error) {
     console.error('Error checking favorite status:', error);
-    return false;
+    throw error;
   }
 };
 
 // History operations
-export const addToHistory = async (uid) => {
+export const addToHistory = async (uid: string): Promise<boolean> => {
   try {
-    console.log(`[DATABASE] Adding to history: ${uid}`);
     if (!db) {
-      console.log('[DATABASE] Database not initialized, initializing...');
       await initDatabase();
     }
 
-    console.log('[DATABASE] Executing SQL to add to history');
-    const result = await db.executeSql(
+    await db!.executeSql(
       `INSERT OR REPLACE INTO ${TABLE_HISTORY} (uid, timestamp) VALUES (?, CURRENT_TIMESTAMP)`,
       [uid]
     );
-    console.log('[DATABASE] SQL execution result:', JSON.stringify(result));
 
-    console.log('[DATABASE] Added to history successfully');
+    console.log('Added to history successfully');
     return true;
   } catch (error) {
-    console.error('[DATABASE] Error adding to history:', error);
+    console.error('Error adding to history:', error);
     throw error;
   }
 };
 
-export const getHistory = async () => {
+export const getHistory = async (): Promise<HistoryItem[]> => {
   try {
-    console.log('[DATABASE] Getting history');
     if (!db) {
-      console.log('[DATABASE] Database not initialized, initializing...');
       await initDatabase();
     }
 
-    console.log('[DATABASE] Executing SQL to get history');
-    const [results] = await db.executeSql(
-      `SELECT uid, timestamp FROM ${TABLE_HISTORY} ORDER BY timestamp DESC`
-    );
-    console.log('[DATABASE] SQL execution completed, rows:', results.rows.length);
-
-    const history = [];
-    for (let i = 0; i < results.rows.length; i++) {
-      const item = results.rows.item(i);
-      console.log(`[DATABASE] History item ${i}:`, item);
+    const [results] = await db!.executeSql(`SELECT uid, timestamp FROM ${TABLE_HISTORY} ORDER BY timestamp DESC`);
+    const history: HistoryItem[] = [];
+    
+    for (let index = 0; index < results.rows.length; index++) {
       history.push({
-        uid: item.uid,
-        timestamp: item.timestamp
+        uid: results.rows.item(index).uid,
+        timestamp: results.rows.item(index).timestamp
       });
     }
 
-    console.log('[DATABASE] Returning history with', history.length, 'items');
     return history;
   } catch (error) {
-    console.error('[DATABASE] Error getting history:', error);
+    console.error('Error getting history:', error);
     throw error;
   }
 };
 
-export const isInHistory = async (uid) => {
+export const isInHistory = async (uid: string): Promise<boolean> => {
   try {
     if (!db) {
       await initDatabase();
     }
 
-    const [results] = await db.executeSql(
+    const [results] = await db!.executeSql(
       `SELECT COUNT(*) as count FROM ${TABLE_HISTORY} WHERE uid = ?`,
       [uid]
     );
@@ -190,6 +185,7 @@ export const isInHistory = async (uid) => {
     return results.rows.item(0).count > 0;
   } catch (error) {
     console.error('Error checking history status:', error);
-    return false;
+    throw error;
   }
-}; 
+};
+
