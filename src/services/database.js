@@ -37,6 +37,15 @@ export const initDatabase = async () => {
       );
     `);
 
+    // Create lists table
+    await db.executeSql(`
+      CREATE TABLE IF NOT EXISTS lists (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     console.log('Database initialized successfully');
     return db;
   } catch (error) {
