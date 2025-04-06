@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -7,33 +7,56 @@ import {
   TouchableOpacity, 
   Image, 
   FlatList,
-  Dimensions
+  Dimensions,
+  Modal,
+  TextInput,
+  Button
 } from 'react-native';
 import { COLORS, FONTS, FONT_SIZES, SPACING } from '../constants/theme';
 import FooterNav from '../components/FooterNav';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
+import { initDatabase } from '../services/database';
 
-// Interface for list items (will be replaced with database items in the future)
+// Update the ListItem interface to match our database structure
 interface ListItem {
-  id: string;
-  title: string;
-  count: number;
-  createdAt: string;
+  id: number;
+  name: string;
+  created_at: string;
 }
 
 export const ListsScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const [lists, setLists] = useState<ListItem[]>([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [newListName, setNewListName] = useState('');
+  const [sortNewestFirst, setSortNewestFirst] = useState(true);
 
-  // Sample data - this will be replaced with database calls in the future
-  const [lists, setLists] = useState<ListItem[]>([
-    { id: '1', title: 'JLPT N5 Vocabulary', count: 23, createdAt: '2024-03-15' },
-    { id: '2', title: 'Basic Greetings', count: 12, createdAt: '2024-03-18' },
-    { id: '3', title: 'Travel Phrases', count: 15, createdAt: '2024-03-20' },
-    { id: '4', title: 'Food & Restaurants', count: 18, createdAt: '2024-03-22' },
-    { id: '5', title: 'Common Verbs', count: 30, createdAt: '2024-03-25' },
-  ]);
+  // Load lists from database when component mounts or sort order changes
+  useEffect(() => {
+    const loadLists = async () => {
+      try {
+        const db = await initDatabase();
+        const [results] = await db.executeSql(
+          `SELECT id, name, created_at FROM lists ORDER BY created_at ${sortNewestFirst ? 'DESC' : 'ASC'}`
+        );
+        const loadedLists = [];
+        for (let i = 0; i < results.rows.length; i++) {
+          loadedLists.push(results.rows.item(i));
+        }
+        setLists(loadedLists);
+      } catch (error) {
+        console.error('Error loading lists:', error);
+      }
+    };
+
+    loadLists();
+  }, [sortNewestFirst]);
+
+  const toggleSortOrder = () => {
+    setSortNewestFirst(!sortNewestFirst);
+  };
 
   const handleNavigate = (screen: keyof Omit<RootStackParamList, 'Video'>) => {
     if (navigation) {
@@ -42,16 +65,39 @@ export const ListsScreen = () => {
   };
 
   const handleAddList = () => {
-    console.log('add list button pressed');
-    // This will be replaced with functionality to add a new list
+    setModalVisible(true);
+  };
+
+  const handleSaveList = async () => {
+    if (newListName.trim() === '') return;
+    try {
+      const db = await initDatabase();
+      await db.executeSql(
+        `INSERT INTO lists (name) VALUES (?)`,
+        [newListName]
+      );
+      setNewListName('');
+      setModalVisible(false);
+      // Fetch updated lists from the database
+      const [results] = await db.executeSql(
+        `SELECT id, name, created_at FROM lists ORDER BY created_at DESC`
+      );
+      const updatedLists = [];
+      for (let i = 0; i < results.rows.length; i++) {
+        updatedLists.push(results.rows.item(i));
+      }
+      setLists(updatedLists);
+    } catch (error) {
+      console.error('Error saving list:', error);
+    }
   };
 
   const renderItem = ({ item }: { item: ListItem }) => {
     return (
       <TouchableOpacity style={styles.listItem}>
         <View style={styles.listContent}>
-          <Text style={styles.listTitle}>{item.title}</Text>
-          <Text style={styles.listCount}>{item.count} items</Text>
+          <Text style={styles.listTitle}>{item.name}</Text>
+          <Text style={styles.listCount}>0 items</Text>
         </View>
         <View style={styles.chevron}>
           <Text style={styles.chevronText}>›</Text>
@@ -64,6 +110,11 @@ export const ListsScreen = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Lists</Text>
+        <TouchableOpacity style={styles.sortButton} onPress={toggleSortOrder}>
+          <Text style={styles.sortText}>
+            {sortNewestFirst ? 'Newest First' : 'Oldest First'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.content}>
@@ -73,7 +124,7 @@ export const ListsScreen = () => {
           <FlatList
             data={lists}
             renderItem={renderItem}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={styles.listContainer}
             showsVerticalScrollIndicator={false}
           />
@@ -87,6 +138,42 @@ export const ListsScreen = () => {
           style={styles.addButtonImage} 
         />
       </TouchableOpacity>
+
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalTitle}>Create New List</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Enter list name"
+              placeholderTextColor={COLORS.text.secondary}
+              value={newListName}
+              onChangeText={setNewListName}
+              autoFocus={true}
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.cancelButton]} 
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.saveButton]} 
+                onPress={handleSaveList}
+                disabled={!newListName.trim()}
+              >
+                <Text style={styles.saveButtonText}>Create List</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <FooterNav onNavigate={handleNavigate} currentScreen="Lists" />
     </SafeAreaView>
@@ -104,6 +191,9 @@ const styles = StyleSheet.create({
     padding: SPACING.sm,
     alignItems: 'center',
     backgroundColor: COLORS.white,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.md,
   },
   headerTitle: {
     fontSize: FONT_SIZES.xl,
@@ -169,5 +259,88 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     resizeMode: 'contain',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
+  modalView: {
+    width: '85%',
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: SPACING.lg,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: FONT_SIZES.lg,
+    fontFamily: FONTS.medium,
+    color: COLORS.text.primary,
+    marginBottom: SPACING.lg,
+    textAlign: 'center',
+  },
+  modalInput: {
+    width: '100%',
+    height: 50,
+    borderWidth: 1,
+    borderColor: COLORS.text.secondary,
+    borderRadius: 8,
+    paddingHorizontal: SPACING.md,
+    fontSize: FONT_SIZES.md,
+    fontFamily: FONTS.regular,
+    color: COLORS.text.primary,
+    marginBottom: SPACING.lg,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  modalButton: {
+    flex: 1,
+    height: 45,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: SPACING.xs,
+  },
+  cancelButton: {
+    backgroundColor: COLORS.background,
+    borderWidth: 1,
+    borderColor: COLORS.text.secondary,
+  },
+  saveButton: {
+    backgroundColor: COLORS.primary,
+  },
+  cancelButtonText: {
+    fontSize: FONT_SIZES.md,
+    fontFamily: FONTS.medium,
+    color: COLORS.text.primary,
+  },
+  saveButtonText: {
+    fontSize: FONT_SIZES.md,
+    fontFamily: FONTS.medium,
+    color: COLORS.white,
+  },
+  sortButton: {
+    backgroundColor: COLORS.background,
+    padding: SPACING.xs,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.text.secondary,
+  },
+  sortText: {
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.medium,
+    color: COLORS.text.primary,
   },
 }); 
