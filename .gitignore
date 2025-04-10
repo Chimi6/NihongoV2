@@ -1,9 +1,14 @@
 # OSX
 #
+.bundle
 .DS_Store
-
+android/
+ios/
+yarn.lock
+package-lock.json
 # Xcode
 #
+.expo
 build/
 *.pbxuser
 !default.pbxuser
