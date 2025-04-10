@@ -9,13 +9,16 @@ import React, {useEffect} from 'react';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {NavigationContainer} from '@react-navigation/native';
 import RootNavigator from './src/navigation/RootNavigator';
+import {SQLiteProvider} from 'expo-sqlite';
 
 const App = () => {
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
-        <RootNavigator />
-      </NavigationContainer>
+      <SQLiteProvider databaseName="JapanDict.db"  >
+        <NavigationContainer>
+          <RootNavigator />
+        </NavigationContainer>
+      </SQLiteProvider>
     </SafeAreaProvider>
   );
 };

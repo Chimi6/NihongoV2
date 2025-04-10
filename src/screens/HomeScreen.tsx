@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -9,17 +9,24 @@ import {
   Platform,
   TouchableOpacity,
 } from 'react-native';
-import { COLORS, FONTS, FONT_SIZES, SPACING } from '../constants/theme';
+import {COLORS, FONTS, FONT_SIZES, SPACING} from '../constants/theme';
 import CategoryIcon from '../components/CategoryIcon';
 import VideoCard from '../components/VideoCard';
 import FooterNav from '../components/FooterNav';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
+import {useNavigation} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {RootStackParamList} from '../types/navigation';
+import {useSQLiteContext} from 'expo-sqlite';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const {height: SCREEN_HEIGHT} = Dimensions.get('window');
 
-type ScreenName = 'Home' | 'Favorites' | 'Lists' | 'History' | 'Settings' | 'Video';
+type ScreenName =
+  | 'Home'
+  | 'Favorites'
+  | 'Lists'
+  | 'History'
+  | 'Settings'
+  | 'Video';
 
 export interface VideoData {
   uid: string;
@@ -42,34 +49,44 @@ export interface VideoData {
 }
 
 const HomeScreen: React.FC = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   console.log('HomeScreen rendering...');
-  
+
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [videos, setVideos] = useState<VideoData[]>([]);
   const categories = ['All', 'Anime', 'Beauty', 'Commercial', 'Food'];
-
+  const db = useSQLiteContext();
+  useEffect(() => {
+    async function setup() {
+      const result = await db.getFirstAsync<{'sqlite_version()': string}>(
+        'SELECT sqlite_version()',
+      );
+      console.log('result db version :', result);
+    }
+    setup();
+  }, []);
   useEffect(() => {
     console.log('HomeScreen useEffect running...');
-    
+
     try {
       // Import the JSON data directly in the effect
       const videoData = require('../assets/data/java_cafe.json') as VideoData[];
       console.log('Loaded video data:', videoData);
       console.log('Number of videos:', videoData.length);
-      
+
       // Process the array of videos
       const typedVideoData = videoData.map((item: VideoData) => ({
         ...item,
         video: {
           ...item.video,
-          difficulty: item.video.difficulty as 1 | 2 | 3
-        }
+          difficulty: item.video.difficulty as 1 | 2 | 3,
+        },
       })) as VideoData[];
-      
+
       console.log('Final typedVideoData:', typedVideoData);
       console.log('Number of videos:', typedVideoData.length);
-      
+
       setVideos(typedVideoData);
     } catch (error) {
       console.error('Error processing video data:', error);
@@ -90,7 +107,7 @@ const HomeScreen: React.FC = () => {
 
   const handleVideoPress = (video: VideoData) => {
     if (navigation) {
-      navigation.navigate('Video', { videoData: video });
+      navigation.navigate('Video', {videoData: video});
     }
   };
 
@@ -106,13 +123,12 @@ const HomeScreen: React.FC = () => {
         <Text style={styles.headerTitle}>Videos</Text>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+        showsVerticalScrollIndicator={false}>
         <View style={styles.categoriesContainer}>
-          {categories.map((category) => (
+          {categories.map(category => (
             <CategoryIcon
               key={category}
               label={category}
@@ -127,7 +143,7 @@ const HomeScreen: React.FC = () => {
           videos.map((item, index) => {
             console.log(`Rendering video card ${index}:`, item.video.title);
             return (
-              <VideoCard 
+              <VideoCard
                 key={item.uid}
                 video={item}
                 onPress={() => handleVideoPress(item)}
@@ -156,7 +172,7 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.xl,
     fontWeight: 'bold',
     color: COLORS.text.primary,
-    fontFamily: FONTS.brush
+    fontFamily: FONTS.brush,
   },
   scrollView: {
     flex: 1,
@@ -181,4 +197,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default HomeScreen; 
+export default HomeScreen;
