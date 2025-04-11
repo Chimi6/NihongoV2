@@ -1,10 +1,12 @@
-// metro.config.js
-const {
-    wrapWithReanimatedMetroConfig,
-  } = require('react-native-reanimated/metro-config');
-  
-  const config = {
-    // Your existing Metro configuration options
-  };
-  
-  module.exports = wrapWithReanimatedMetroConfig(config);
+const { getDefaultConfig } = require("@expo/metro-config");
+
+const defaultConfig = getDefaultConfig(__dirname);
+defaultConfig.resolver.assetExts.push("db");
+module.exports = {
+  ...defaultConfig,
+  resolver: {
+    ...defaultConfig.resolver,
+    sourceExts: ["js", "json", "ts", "tsx", "jsx", "mjs", "css","cjs"],
+    blacklistRE: /#current-cloud-backend\/.*/,
+  },
+};

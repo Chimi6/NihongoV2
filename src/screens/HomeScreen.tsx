@@ -59,10 +59,13 @@ const HomeScreen: React.FC = () => {
   const db = useSQLiteContext();
   useEffect(() => {
     async function setup() {
-      const result = await db.getFirstAsync<{'sqlite_version()': string}>(
-        'SELECT sqlite_version()',
-      );
-      console.log('result db version :', result);
+      console.log('inside setup');
+      try {
+        const firstRow = await db.getFirstAsync('SELECT * FROM examples');
+        console.log('First row :', firstRow);
+      } catch (error) {
+        console.log('error :', error);
+      }
     }
     setup();
   }, []);

@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "NihongoV2",
-    "slug": "test3",
+    "slug": "nihongov2",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -19,13 +19,20 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.nihongov2.nihongov2"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-sqlite"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "a32f0a5a-afe3-4836-81d6-715feae44d0f"
+      }
+    },
+    "owner": "nihongov2"
   }
 }
