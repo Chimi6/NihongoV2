@@ -23,4 +23,4 @@ declare module '../services/database.js' {
   export function addToHistory(uid: string): Promise<boolean>;
   export function getHistory(): Promise<HistoryItem[]>;
   export function isInHistory(uid: string): Promise<boolean>;
-} 
+}
