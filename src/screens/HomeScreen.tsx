@@ -1,14 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
-  Dimensions,
-  Platform,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, Dimensions } from 'react-native';
 import {COLORS, FONTS, FONT_SIZES, SPACING} from '../constants/theme';
 import CategoryIcon from '../components/CategoryIcon';
 import VideoCard from '../components/VideoCard';
@@ -16,8 +7,7 @@ import FooterNav from '../components/FooterNav';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../types/navigation';
-import {useSQLiteContext} from 'expo-sqlite';
-
+import {useDb} from '../../dbContext';
 const {height: SCREEN_HEIGHT} = Dimensions.get('window');
 
 type ScreenName =
@@ -56,10 +46,9 @@ const HomeScreen: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [videos, setVideos] = useState<VideoData[]>([]);
   const categories = ['All', 'Anime', 'Beauty', 'Commercial', 'Food'];
-  const db = useSQLiteContext();
+  const db = useDb();
   useEffect(() => {
     async function setup() {
-      console.log('inside setup');
       try {
         const firstRow = await db.getFirstAsync('SELECT * FROM examples');
         console.log('First row :', firstRow);
