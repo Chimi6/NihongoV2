@@ -17,7 +17,7 @@ const copyAssetToDocuments = async (assetFileName, destinationFileName) => {
   console.log('🚀 Starting DB copy...');
   const destPath = `${RNFS.DocumentDirectoryPath}/${assetFileName}`;
   const isDev = __DEV__;
-  const shouldForceOverwrite = isDev;
+  const shouldForceOverwrite = false;
 
   const exists = await RNFS.exists(destPath);
 
@@ -37,9 +37,10 @@ const copyAssetToDocuments = async (assetFileName, destinationFileName) => {
       if (exists && shouldForceOverwrite) {
         await RNFS.unlink(destPath);
         console.log('🗑️ Existing DB deleted');
+        await RNFS.copyFile(sourcePath, destPath);
+        console.log('✅ Copied DB from bundle (iOS) to:', destPath);
       }
-      await RNFS.copyFile(sourcePath, destPath);
-      console.log('✅ Copied DB from bundle (iOS) to:', destPath);
+      
       const stat = await RNFS.stat(destPath);
       console.log('📏 DB file size:', stat.size);
       return destPath;
@@ -65,7 +66,7 @@ export async function copyDatabase() {
 
   // const exists = await RNFS.exists(destPath);
   // // 👇 Force overwrite — during development
-  // const shouldForceCopy = true;
+  // const shouldForceCopy = false;
 
   // if (!exists || shouldForceCopy) {
   // try {
@@ -158,7 +159,7 @@ export const initDatabase = async () => {
 
     // console.log('📂 Opened database:', JSON.stringify(db));
 
-    await listAllTables();
+
 
     // Create favorites table with just the video UID
     await db.executeSql(`
@@ -186,11 +187,13 @@ export const initDatabase = async () => {
     `);
 
     console.log('Database initialized successfully');
+    await listAllTables();
     return db;
   } catch (error) {
     console.error('Error initializing database:', error);
     throw error;
   }
+      await listAllTables();
 };
 
 // Favorites operations
