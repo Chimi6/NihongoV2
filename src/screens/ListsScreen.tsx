@@ -17,7 +17,7 @@ import FooterNav from '../components/FooterNav';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
-import { initDatabase } from '../services/database';
+import { initDatabase, getLists, createList } from '../services/database';
 
 // Update the ListItem interface to match our database structure
 interface ListItem {
@@ -37,14 +37,8 @@ export const ListsScreen = () => {
   useEffect(() => {
     const loadLists = async () => {
       try {
-        const db = await initDatabase();
-        const [results] = await db.executeSql(
-          `SELECT id, name, created_at FROM lists ORDER BY created_at ${sortNewestFirst ? 'DESC' : 'ASC'}`
-        );
-        const loadedLists = [];
-        for (let i = 0; i < results.rows.length; i++) {
-          loadedLists.push(results.rows.item(i));
-        }
+        await initDatabase();
+        const loadedLists = await getLists(sortNewestFirst);
         setLists(loadedLists);
       } catch (error) {
         console.error('Error loading lists:', error);
@@ -71,21 +65,12 @@ export const ListsScreen = () => {
   const handleSaveList = async () => {
     if (newListName.trim() === '') return;
     try {
-      const db = await initDatabase();
-      await db.executeSql(
-        `INSERT INTO lists (name) VALUES (?)`,
-        [newListName]
-      );
+      await initDatabase();
+      await createList(newListName);
       setNewListName('');
       setModalVisible(false);
       // Fetch updated lists from the database
-      const [results] = await db.executeSql(
-        `SELECT id, name, created_at FROM lists ORDER BY created_at DESC`
-      );
-      const updatedLists = [];
-      for (let i = 0; i < results.rows.length; i++) {
-        updatedLists.push(results.rows.item(i));
-      }
+      const updatedLists = await getLists(true);
       setLists(updatedLists);
     } catch (error) {
       console.error('Error saving list:', error);

@@ -23,4 +23,10 @@ declare module '../services/database.js' {
   export function addToHistory(uid: string): Promise<boolean>;
   export function getHistory(): Promise<HistoryItem[]>;
   export function isInHistory(uid: string): Promise<boolean>;
-} 
+  export function getLists(sortNewestFirst?: boolean): Promise<Array<{
+    id: number;
+    name: string;
+    created_at: string;
+  }>>;
+  export function createList(name: string): Promise<any>;
+}
