@@ -278,7 +278,7 @@ const VideoScreen: React.FC = () => {
               {[1, 2, 3].map((level) => (
                 <Image
                   key={level}
-                  source={require('../assets/icons/sushi2.png')}
+                  source={require('../../assets/icons/sushi2.png')}
                   style={[
                     styles.difficultyIcon,
                     { opacity: level <= videoData.video.difficulty ? 1 : 0.3 }
@@ -296,8 +296,8 @@ const VideoScreen: React.FC = () => {
             </Text>
             <Image 
               source={isFavorited 
-                ? require('../assets/icons/favoriteheart.png')
-                : require('../assets/icons/plusthick.png')
+                ? require('../../assets/icons/favoriteheart.png')
+                : require('../../assets/icons/plusthick.png')
               }
               style={styles.favoriteIcon}
             />
@@ -329,7 +329,7 @@ const VideoScreen: React.FC = () => {
                 onPress={() => handlePlayPress(segment.id)}
               >
                 <Image 
-                  source={require('../assets/icons/playbutton5.png')}
+                  source={require('../../assets/icons/playbutton5.png')}
                   style={styles.playButtonImage}
                 />
               </TouchableOpacity>

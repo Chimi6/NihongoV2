@@ -26,7 +26,7 @@ interface ListItem {
   created_at: string;
 }
 
-export const ListsScreen = () => {
+export default function ListsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [lists, setLists] = useState<ListItem[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -134,7 +134,7 @@ export const ListsScreen = () => {
       {/* Floating Add Button */}
       <TouchableOpacity style={styles.addButton} onPress={handleAddList}>
         <Image 
-          source={require('../assets/icons/roundaddbutton.png')} 
+          source={require('../../assets/icons/roundaddbutton.png')} 
           style={styles.addButtonImage} 
         />
       </TouchableOpacity>
@@ -178,7 +178,7 @@ export const ListsScreen = () => {
       <FooterNav onNavigate={handleNavigate} currentScreen="Lists" />
     </SafeAreaView>
   );
-};
+}
 
 const { width } = Dimensions.get('window');
 

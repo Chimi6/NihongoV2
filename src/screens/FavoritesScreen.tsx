@@ -34,7 +34,7 @@ const FavoritesScreen: React.FC = () => {
   const loadAllVideos = async () => {
     try {
       // Load all videos from the JSON file
-      const videoData = require('../assets/data/java_cafe.json') as VideoData[];
+      const videoData = require('../../assets/data/java_cafe.json') as VideoData[];
       setAllVideos(videoData);
     } catch (error) {
       console.error('Error loading all videos:', error);

@@ -5,73 +5,68 @@
  * @format
  */
 
-import { useEffect, useState } from 'react';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
-import {NavigationContainer} from '@react-navigation/native';
-import RootNavigator from './src/navigation/RootNavigator';
-import {ActivityIndicator, Text, View} from 'react-native';
-import * as FileSystem from 'expo-file-system';
-import * as SQLite from 'expo-sqlite';
-import {Asset} from 'expo-asset';
-import {DbContext} from './dbContext';
-const App = () => {
-  async function prepareDatabase() {
-    const dbName = 'JapanDict.db';
-    const dbDir = FileSystem.documentDirectory + 'SQLite';
-    const dbPath = `${dbDir}/${dbName}`;
+import React, { useEffect, useState } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { View, Text } from 'react-native';
+import { DbContext } from './src/contexts/DbContext';
+import { initDatabase } from './src/services/database';
+import HomeScreen from './src/screens/HomeScreen';
+import SearchScreen from './src/screens/SearchScreen';
+import EntryScreen from './src/screens/EntryScreen';
+import ListsScreen from './src/screens/ListsScreen';
+import ListDetailScreen from './src/screens/ListDetailScreen';
+import HistoryScreen from './src/screens/HistoryScreen';
+import FavoritesScreen from './src/screens/FavoritesScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
+import VideoScreen from './src/screens/VideoScreen';
+import { SQLiteDatabase } from 'expo-sqlite';
 
-    const fileInfo = await FileSystem.getInfoAsync(dbPath);
+const Stack = createNativeStackNavigator();
 
-    if (!fileInfo.exists) {
-      console.log('[DB] Copying database from assets...');
-
-      // Ensure directory exists
-      await FileSystem.makeDirectoryAsync(dbDir, {intermediates: true});
-
-      // Load the asset
-      const asset = Asset.fromModule(require('./assets/JapanDict.db'));
-      await asset.downloadAsync();
-
-      // Copy the asset into the app's SQLite dir
-      await FileSystem.copyAsync({
-        from: asset.localUri,
-        to: dbPath,
-      });
-
-      console.log('[DB] Copy complete');
-    } else {
-      console.log('[DB] Database already exists');
-    }
-
-    return SQLite.openDatabaseAsync(dbName);
-  }
-  const [dbReady, setDbReady] = useState(false);
-  const [db, setDb] = useState(null);
+export default function App() {
+  const [db, setDb] = useState<SQLiteDatabase | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    (async () => {
+    async function loadDatabase() {
       try {
-        const db = await prepareDatabase();
-
-        // Optional: test that it works
-        const tables = await db.getAllAsync(
-          "SELECT name FROM sqlite_master WHERE type='table'",
-        );
-        console.log('[DB] Tables:', tables);
-        setDb(db);
-        setDbReady(true);
-      } catch (e) {
-        console.error('[DB] Failed to prepare DB:', e);
+        const database = await initDatabase();
+        setDb(database);
+        setError(null);
+      } catch (error) {
+        console.error('Error loading database:', error);
+        setError(error instanceof Error ? error : new Error(String(error)));
+      } finally {
+        setIsLoading(false);
       }
-    })();
+    }
+
+    loadDatabase();
   }, []);
 
-  if (!dbReady) {
+  if (isLoading) {
     return (
-      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-        <ActivityIndicator />
-        <Text>Loading DB...</Text>
-      </View>
+      <SafeAreaProvider>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text>Loading database...</Text>
+        </View>
+      </SafeAreaProvider>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaProvider>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <Text style={{ color: 'red', textAlign: 'center' }}>
+            Error loading database: {error.message}
+          </Text>
+        </View>
+      </SafeAreaProvider>
     );
   }
 
@@ -79,11 +74,25 @@ const App = () => {
     <SafeAreaProvider>
       <DbContext.Provider value={db}>
         <NavigationContainer>
-          <RootNavigator />
+          <Stack.Navigator
+            initialRouteName="Home"
+            screenOptions={{
+              headerShown: false,
+            }}
+          >
+            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="Search" component={SearchScreen} />
+            <Stack.Screen name="Entry" component={EntryScreen} />
+            <Stack.Screen name="Lists" component={ListsScreen} />
+            <Stack.Screen name="ListDetail" component={ListDetailScreen} />
+            <Stack.Screen name="History" component={HistoryScreen} />
+            <Stack.Screen name="Favorites" component={FavoritesScreen} />
+            <Stack.Screen name="Settings" component={SettingsScreen} />
+            <Stack.Screen name="Video" component={VideoScreen} />
+          </Stack.Navigator>
         </NavigationContainer>
       </DbContext.Provider>
+      <StatusBar style="auto" />
     </SafeAreaProvider>
   );
-};
-
-export default App;
+}

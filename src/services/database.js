@@ -1,204 +1,189 @@
-// import SQLite from 'react-native-sqlite-storage';
+import * as FileSystem from 'expo-file-system';
+import * as SQLite from 'expo-sqlite';
+import { Asset } from 'expo-asset';
 
-// // Database configuration
-// const database_name = 'nihongo.db';
-// const TABLE_FAVORITES = 'favorites';
-// const TABLE_HISTORY = 'history';
+let dbInstance = null;
 
-// // Enable both callbacks and promises
-// SQLite.enablePromise(true);
+async function prepareDatabase() {
+  if (dbInstance) {
+    return dbInstance;
+  }
 
-// // Global database instance
-// let db = null;
+  const dbName = 'JapanDict.db';
+  const dbDir = FileSystem.documentDirectory + 'SQLite';
+  const dbPath = `${dbDir}/${dbName}`;
 
-// // Database initialization
-// export const initDatabase = async () => {
-//   try {
-//     if (db) return db;
+  try {
+    const fileInfo = await FileSystem.getInfoAsync(dbPath);
 
-//     db = await SQLite.openDatabase({
-//       name: database_name,
-//       location: 'default',
-//     });
+    if (!fileInfo.exists) {
+      console.log('[DB] Copying database from assets...');
 
-//     // Create favorites table with just the video UID
-//     await db.executeSql(`
-//       CREATE TABLE IF NOT EXISTS ${TABLE_FAVORITES} (
-//         uid TEXT PRIMARY KEY,
-//         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-//       );
-//     `);
+      // Ensure directory exists
+      await FileSystem.makeDirectoryAsync(dbDir, { intermediates: true });
 
-//     // Create history table
-//     await db.executeSql(`
-//       CREATE TABLE IF NOT EXISTS ${TABLE_HISTORY} (
-//         uid TEXT PRIMARY KEY,
-//         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-//       );
-//     `);
+      // Load the asset
+      const asset = Asset.fromModule(require('../../assets/JapanDict.db'));
+      await asset.downloadAsync();
 
-//     // Create lists table
-//     await db.executeSql(`
-//       CREATE TABLE IF NOT EXISTS lists (
-//         id INTEGER PRIMARY KEY AUTOINCREMENT,
-//         name TEXT UNIQUE,
-//         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-//       );
-//     `);
+      // Copy the asset into the app's SQLite dir
+      await FileSystem.copyAsync({
+        from: asset.localUri,
+        to: dbPath,
+      });
 
-//     console.log('Database initialized successfully');
-//     return db;
-//   } catch (error) {
-//     console.error('Error initializing database:', error);
-//     throw error;
-//   }
-// };
+      console.log('[DB] Copy complete');
+    } else {
+      console.log('[DB] Database already exists');
+    }
 
-// // Favorites operations
-// export const addToFavorites = async (uid) => {
-//   try {
-//     if (!db) {
-//       await initDatabase();
-//     }
-
-//     await db.executeSql(
-//       `INSERT OR REPLACE INTO ${TABLE_FAVORITES} (uid) VALUES (?)`,
-//       [uid]
-//     );
-
-//     console.log('Added to favorites successfully');
-//     return true;
-//   } catch (error) {
-//     console.error('Error adding to favorites:', error);
-//     throw error;
-//   }
-// };
-
-// export const removeFromFavorites = async (uid) => {
-//   try {
-//     if (!db) {
-//       await initDatabase();
-//     }
-
-//     await db.executeSql(`DELETE FROM ${TABLE_FAVORITES} WHERE uid = ?`, [uid]);
-//     console.log('Removed from favorites successfully');
-//     return true;
-//   } catch (error) {
-//     console.error('Error removing from favorites:', error);
-//     throw error;
-//   }
-// };
-
-// export const getFavorites = async () => {
-//   try {
-//     if (!db) {
-//       await initDatabase();
-//     }
-
-//     const [results] = await db.executeSql(
-//       `SELECT uid FROM ${TABLE_FAVORITES} ORDER BY created_at DESC`
-//     );
-
-//     const favorites = [];
-//     for (let i = 0; i < results.rows.length; i++) {
-//       favorites.push(results.rows.item(i).uid);
-//     }
-
-//     return favorites;
-//   } catch (error) {
-//     console.error('Error getting favorites:', error);
-//     throw error;
-//   }
-// };
-
-// export const isFavorite = async (uid) => {
-//   try {
-//     if (!db) {
-//       await initDatabase();
-//     }
-
-//     const [results] = await db.executeSql(
-//       `SELECT COUNT(*) as count FROM ${TABLE_FAVORITES} WHERE uid = ?`,
-//       [uid]
-//     );
+    // Open the database
+    dbInstance = await SQLite.openDatabaseAsync(dbName);
     
-//     return results.rows.item(0).count > 0;
-//   } catch (error) {
-//     console.error('Error checking favorite status:', error);
-//     return false;
-//   }
-// };
-
-// // History operations
-// export const addToHistory = async (uid) => {
-//   try {
-//     console.log(`[DATABASE] Adding to history: ${uid}`);
-//     if (!db) {
-//       console.log('[DATABASE] Database not initialized, initializing...');
-//       await initDatabase();
-//     }
-
-//     console.log('[DATABASE] Executing SQL to add to history');
-//     const result = await db.executeSql(
-//       `INSERT OR REPLACE INTO ${TABLE_HISTORY} (uid, timestamp) VALUES (?, CURRENT_TIMESTAMP)`,
-//       [uid]
-//     );
-//     console.log('[DATABASE] SQL execution result:', JSON.stringify(result));
-
-//     console.log('[DATABASE] Added to history successfully');
-//     return true;
-//   } catch (error) {
-//     console.error('[DATABASE] Error adding to history:', error);
-//     throw error;
-//   }
-// };
-
-// export const getHistory = async () => {
-//   try {
-//     console.log('[DATABASE] Getting history');
-//     if (!db) {
-//       console.log('[DATABASE] Database not initialized, initializing...');
-//       await initDatabase();
-//     }
-
-//     console.log('[DATABASE] Executing SQL to get history');
-//     const [results] = await db.executeSql(
-//       `SELECT uid, timestamp FROM ${TABLE_HISTORY} ORDER BY timestamp DESC`
-//     );
-//     console.log('[DATABASE] SQL execution completed, rows:', results.rows.length);
-
-//     const history = [];
-//     for (let i = 0; i < results.rows.length; i++) {
-//       const item = results.rows.item(i);
-//       console.log(`[DATABASE] History item ${i}:`, item);
-//       history.push({
-//         uid: item.uid,
-//         timestamp: item.timestamp
-//       });
-//     }
-
-//     console.log('[DATABASE] Returning history with', history.length, 'items');
-//     return history;
-//   } catch (error) {
-//     console.error('[DATABASE] Error getting history:', error);
-//     throw error;
-//   }
-// };
-
-// export const isInHistory = async (uid) => {
-//   try {
-//     if (!db) {
-//       await initDatabase();
-//     }
-
-//     const [results] = await db.executeSql(
-//       `SELECT COUNT(*) as count FROM ${TABLE_HISTORY} WHERE uid = ?`,
-//       [uid]
-//     );
+    // Initialize app tables
+    await initializeAppTables();
     
-//     return results.rows.item(0).count > 0;
-//   } catch (error) {
-//     console.error('Error checking history status:', error);
-//     return false;
-//   }
-// }; 
+    return dbInstance;
+  } catch (error) {
+    console.error('[DB] Error preparing database:', error);
+    throw error;
+  }
+}
+
+async function initializeAppTables() {
+  try {
+    if (!dbInstance) {
+      throw new Error('Database instance not initialized');
+    }
+
+    await dbInstance.execAsync(`
+      CREATE TABLE IF NOT EXISTS lists (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS favorites (
+        uid TEXT PRIMARY KEY,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS history (
+        uid TEXT PRIMARY KEY,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log('[DB] App tables initialized');
+
+    // Get all tables
+    const tables = await dbInstance.getAllAsync(`
+      SELECT name FROM sqlite_master 
+      WHERE type='table' 
+      ORDER BY name;
+    `);
+    
+    console.log('\n[DB] All Tables:');
+    console.log('----------------');
+    if (tables && tables.length > 0) {
+      // Get count for each table
+      for (const table of tables) {
+        const countResult = await dbInstance.getFirstAsync(
+          `SELECT COUNT(*) as count FROM ${table.name}`
+        );
+        console.log(`- ${table.name} (${countResult.count} records)`);
+      }
+    } else {
+      console.log('No tables found');
+    }
+    console.log('----------------\n');
+
+  } catch (error) {
+    console.error('[DB] Error initializing app tables:', error);
+    throw error;
+  }
+}
+
+export async function initDatabase() {
+  try {
+    return await prepareDatabase();
+  } catch (error) {
+    console.error('[DB] Error initializing database:', error);
+    throw error;
+  }
+}
+
+export async function addToFavorites(uid) {
+  try {
+    const db = await initDatabase();
+    await db.runAsync('INSERT OR IGNORE INTO favorites (uid) VALUES (?)', [uid]);
+    return true;
+  } catch (error) {
+    console.error('Error adding to favorites:', error);
+    return false;
+  }
+}
+
+export async function removeFromFavorites(uid) {
+  try {
+    const db = await initDatabase();
+    await db.runAsync('DELETE FROM favorites WHERE uid = ?', [uid]);
+    return true;
+  } catch (error) {
+    console.error('Error removing from favorites:', error);
+    return false;
+  }
+}
+
+export async function getFavorites() {
+  try {
+    const db = await initDatabase();
+    const result = await db.getAllAsync('SELECT uid FROM favorites ORDER BY created_at DESC');
+    return result.map(row => row.uid);
+  } catch (error) {
+    console.error('Error getting favorites:', error);
+    return [];
+  }
+}
+
+export async function isFavorite(uid) {
+  try {
+    const db = await initDatabase();
+    const result = await db.getFirstAsync('SELECT 1 FROM favorites WHERE uid = ?', [uid]);
+    return !!result;
+  } catch (error) {
+    console.error('Error checking favorite status:', error);
+    return false;
+  }
+}
+
+export async function addToHistory(uid) {
+  try {
+    const db = await initDatabase();
+    await db.runAsync('INSERT OR REPLACE INTO history (uid) VALUES (?)', [uid]);
+    return true;
+  } catch (error) {
+    console.error('Error adding to history:', error);
+    return false;
+  }
+}
+
+export async function getHistory() {
+  try {
+    const db = await initDatabase();
+    return await db.getAllAsync('SELECT uid, timestamp FROM history ORDER BY timestamp DESC');
+  } catch (error) {
+    console.error('Error getting history:', error);
+    return [];
+  }
+}
+
+export async function isInHistory(uid) {
+  try {
+    const db = await initDatabase();
+    const result = await db.getFirstAsync('SELECT 1 FROM history WHERE uid = ?', [uid]);
+    return !!result;
+  } catch (error) {
+    console.error('Error checking history status:', error);
+    return false;
+  }
+} 

@@ -48,15 +48,15 @@ const VideoCard: React.FC<VideoCardProps> = ({
           <Text style={styles.difficulty}>Difficulty</Text>
           <View style={styles.iconsContainer}>
             <Image 
-              source={require('../assets/icons/sushi2.png')}
+              source={require('../../assets/icons/sushi2.png')}
               style={[styles.icon, { opacity: video.video.difficulty >= 1 ? 1 : 0.3 }]}
             />
             <Image 
-              source={require('../assets/icons/sushi2.png')}
+              source={require('../../assets/icons/sushi2.png')}
               style={[styles.icon, { opacity: video.video.difficulty >= 2 ? 1 : 0.3 }]}
             />
             <Image 
-              source={require('../assets/icons/sushi2.png')}
+              source={require('../../assets/icons/sushi2.png')}
               style={[styles.icon, { opacity: video.video.difficulty >= 3 ? 1 : 0.3 }]}
             />
           </View>

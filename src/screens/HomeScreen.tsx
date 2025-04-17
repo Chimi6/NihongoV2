@@ -63,7 +63,7 @@ const HomeScreen: React.FC = () => {
 
     try {
       // Import the JSON data directly in the effect
-      const videoData = require('../assets/data/java_cafe.json') as VideoData[];
+      const videoData = require('../../assets/data/java_cafe.json') as VideoData[];
       console.log('Loaded video data:', videoData);
       console.log('Number of videos:', videoData.length);
 

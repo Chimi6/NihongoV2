@@ -11,11 +11,11 @@ interface FooterNavProps {
 
 const FooterNav: React.FC<FooterNavProps> = ({ onNavigate, currentScreen }) => {
   const navItems = [
-    { label: 'Videos', icon: require('../assets/icons/monitor4.png'), screen: 'Home' as ScreenName },
-    { label: 'Favorites', icon: require('../assets/icons/heart.png'), screen: 'Favorites' as ScreenName },
-    { label: 'Lists', icon: require('../assets/icons/test.png'), screen: 'Lists' as ScreenName },
-    { label: 'History', icon: require('../assets/icons/clock5.png'), screen: 'History' as ScreenName },
-    { label: 'Settings', icon: require('../assets/icons/gearcopy.png'), screen: 'Settings' as ScreenName },
+    { label: 'Videos', icon: require('../../assets/icons/monitor4.png'), screen: 'Home' as ScreenName },
+    { label: 'Favorites', icon: require('../../assets/icons/heart.png'), screen: 'Favorites' as ScreenName },
+    { label: 'Lists', icon: require('../../assets/icons/test.png'), screen: 'Lists' as ScreenName },
+    { label: 'History', icon: require('../../assets/icons/clock5.png'), screen: 'History' as ScreenName },
+    { label: 'Settings', icon: require('../../assets/icons/gearcopy.png'), screen: 'Settings' as ScreenName },
   ];
 
   // Create animated values for each nav item

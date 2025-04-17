@@ -5,8 +5,8 @@
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web"
   },
   "dependencies": {
@@ -15,8 +15,9 @@
     "@react-navigation/native": "^7.1.6",
     "@react-navigation/native-stack": "^7.3.10",
     "expo": "^52.0.44",
-    "expo-dev-client": "~5.0.19",
+    "expo-dev-client": "~5.0.20",
     "expo-sqlite": "~15.1.4",
+    "expo-status-bar": "^2.0.1",
     "react": "18.3.1",
     "react-native": "0.76.9",
     "react-native-reanimated": "~3.16.1",
